@@ -69,6 +69,7 @@ public class UserServiceApp extends AbstractVerticle
     
     public void stop(Future<Void> stopFuture) throws Exception{
     	System.out.println("vertx-user-service verticle stopped!");
+    	stopFuture.complete();
     }
     
     private void HttpServer(int port) {
@@ -128,7 +129,7 @@ public class UserServiceApp extends AbstractVerticle
 
 	    	        JsonObject user = lookup.result();
 
-	    	        if (user == null) {
+	    	        if (user == null || user.size() == 0) {
 	    	          ctx.fail(404);
 	    	        } else {
 	    	          ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json");
@@ -153,7 +154,7 @@ public class UserServiceApp extends AbstractVerticle
 		      }
 		      JsonObject user = lookup.result();
 		
-		      if (user != null) {
+		      if (user != null && user.size() > 0) {
 			    			    
 			    ctx.addCookie(Cookie.cookie("userName", userDetails.getString("userName")));
 		    	ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json");
@@ -354,7 +355,7 @@ public class UserServiceApp extends AbstractVerticle
 
     	        List<JsonObject> company = lookup.result();
 
-    	        if (company == null) {
+    	        if (company == null || company.size() == 0) {
     	          ctx.fail(404);
     	          
     	        } else {
@@ -378,7 +379,7 @@ public class UserServiceApp extends AbstractVerticle
 
     	        List<JsonObject> site = lookup.result();
 
-    	        if (site == null) {
+    	        if (site == null || site.size() == 0) {
     	          ctx.fail(404);
     	        } else {
     	        	
@@ -402,7 +403,7 @@ public class UserServiceApp extends AbstractVerticle
 
     	        List<JsonObject> dept = lookup.result();
 
-    	        if (dept == null) {
+    	        if (dept == null || dept.size() == 0) {
     	          ctx.fail(404);
     	        } else {
     	        	

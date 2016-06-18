@@ -21,4 +21,9 @@ public class Base64Util {
 		return decodedString.split(":")[1];
 	}
 	
+	public String encode(String userName, String password) {
+		byte[] userPassByteEncoded = Base64.getEncoder().encode((userName + ":" + password).getBytes());
+		return "Basic " + new String(userPassByteEncoded);
+	}
+	
 }
