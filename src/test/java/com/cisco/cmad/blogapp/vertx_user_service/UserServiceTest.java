@@ -45,7 +45,7 @@ public class UserServiceTest
 	private String userName = "dan";
 	private String password = "password";
 	
-    private static int MONGO_PORT = 12345;
+    private static int MONGO_PORT = 12346;
     private static final MongodStarter starter = MongodStarter.getDefaultInstance();
 
     private MongodExecutable _mongodExe;
