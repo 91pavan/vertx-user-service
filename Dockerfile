@@ -8,7 +8,7 @@ ENV VERTICLE_FILE vertx-user-service-0.0.1-SNAPSHOT-jar-with-dependencies.jar
 # Set the location of the verticles
 ENV VERTICLE_HOME /usr/verticles
 
-EXPOSE 8084
+EXPOSE 8086
 
 # Copy your verticle to the container                   
 COPY $VERTICLE_FILE $VERTICLE_HOME/
