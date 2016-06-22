@@ -38,6 +38,8 @@ public class UserServiceApp extends AbstractVerticle
     HTTPCorsHandler corsHandler = new HTTPCorsHandler();
     ZooConfig zooConfig = new ZooConfig("localhost");
     
+    EventBusConsumer eventBusConsumer = new EventBusConsumer();
+    
     CompanyHandler companyHandler = null;
     
     public MongoClient getClient(JsonObject conf) {
@@ -60,6 +62,8 @@ public class UserServiceApp extends AbstractVerticle
     	
     	// initialize the eventBus. to be used to publish messages
     	eb = vertx.eventBus();
+    	
+    	eventBusConsumer.consumer(eb, client);
     	
     	// start the HTTP server
     	HttpServer(Integer.parseInt(zooConfig.readAppPortConfig()));
