@@ -63,7 +63,7 @@ public class UserServiceApp extends AbstractVerticle
     	// initialize the eventBus. to be used to publish messages
     	eb = vertx.eventBus();
     	
-    	eventBusConsumer.consumer(eb, client);
+    	// eventBusConsumer.consumer(eb, client);
     	
     	// start the HTTP server
     	HttpServer(Integer.parseInt(zooConfig.readAppPortConfig()));
