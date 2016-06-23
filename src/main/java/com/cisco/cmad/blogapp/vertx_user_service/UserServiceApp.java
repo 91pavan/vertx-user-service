@@ -1,5 +1,6 @@
 package com.cisco.cmad.blogapp.vertx_user_service;
 
+import java.util.List;
 import java.util.Properties;
 
 import com.cisco.cmad.blogapp.config.AppConfig;
@@ -93,6 +94,11 @@ public class UserServiceApp extends AbstractVerticle
     	registerUser(router);
     	 
     	getSessionDetails(router);
+    	
+    	getSignedInUsers(router);
+    	
+    	// log out user
+    	logOutUser(router);
         	
     	companyHandler.getCompany(router);
     	
@@ -133,10 +139,45 @@ public class UserServiceApp extends AbstractVerticle
     		});
     	
     }
+    
+    
+    public void getSignedInUsers(Router router) {
+    	
+    	router.get("/Services/rest/getSignedInUsers").handler(ctx -> {
+    		  
+    		String authHeader = ctx.request().headers().get("Authorization");
+    		
+    		String decodedString = base64Util.decode(authHeader);
+    		String userName = base64Util.getUserName(decodedString);
+    		String password = base64Util.getPassword(decodedString);
+    		
+	    	client.find("users", new JsonObject().put("loggedIn", true), lookup -> {
+    	        // error handling
+    	        if (lookup.failed()) {
+    	          ctx.fail(500);
+    	          return;
+    	        }
+
+    	        List<JsonObject> signedInUsers = lookup.result();
+
+    	        if (signedInUsers == null || signedInUsers.size() == 0) {
+    	        	
+    	        	ctx.response().end("No users signed in yet.");
+    	        	
+    	        } else {
+	    	        	
+	    	          ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json");
+	    	          ctx.response().end(signedInUsers.toString());
+	    	        }
+	    	      });
+    		});
+    	
+    }
    
     public void loginUser(Router router) {
+    	
     	router.post("/Services/rest/user/auth").handler(ctx -> {    	         	      
-		      JsonObject userDetails = ctx.getBodyAsJson();
+		  JsonObject userDetails = ctx.getBodyAsJson();
 		      
 		      client.findOne("users", new JsonObject().put("userName", userDetails.getString("userName"))
 		      .put("password", userDetails.getString("password")), null, lookup -> {
@@ -149,7 +190,18 @@ public class UserServiceApp extends AbstractVerticle
 		      JsonObject user = lookup.result();
 		
 		      if (user != null && user.size() > 0) {
-			    			    
+			      
+		    	  user.put("loggedIn", true);
+		    	  
+		    	  client.save("users", user , insert -> {
+		              // error handling
+		              if (insert.failed()) {
+		                ctx.fail(500);
+		                return;
+		              }
+		              // do nothing
+		            });  
+		    	
 		    	ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json");
 	            ctx.response().setStatusCode(200);
 	            ctx.response().end(userDetails.encode());
@@ -162,6 +214,51 @@ public class UserServiceApp extends AbstractVerticle
 		    });
     	});
     }
+    
+    public void logOutUser(Router router) {
+    	
+    	router.post("/Services/rest/user/logout").handler(ctx -> {  
+
+    		String authHeader = ctx.request().headers().get("Authorization");
+    		
+    		String decodedString = base64Util.decode(authHeader);
+    		String userName = base64Util.getUserName(decodedString);
+    		String password = base64Util.getPassword(decodedString);
+    		  		      
+  		      client.findOne("users", new JsonObject().put("userName", userName)
+  		      .put("password", password), null, lookup -> {
+  		    		    	 
+  		      // error handling
+  		      if (lookup.failed()) {
+  		        ctx.fail(500);
+  		        return;
+  		      }
+  		      JsonObject user = lookup.result();
+  		
+  		      if (user != null && user.size() > 0) {
+  			      
+  		    	  user.put("loggedIn", false);
+  		    	  
+  		    	  client.save("users", user , insert -> {
+  		              // error handling
+  		              if (insert.failed()) {
+  		                ctx.fail(500);
+  		                return;
+  		              }
+  		              // do nothing
+  		            });  
+  		    	
+  		    	ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json");
+  	            ctx.response().setStatusCode(200).end();
+  	            
+  		      } else {
+  		        ctx.fail(404);
+  		        return;
+  		      }
+  		      
+  		    });
+      	});
+      }
     
     public void registerUser(Router router) {
     	router.post("/Services/rest/user/register").handler(ctx -> {
@@ -196,16 +293,17 @@ public class UserServiceApp extends AbstractVerticle
 		    	  ctx.fail(500);
 		      } else {
 		    	  if( userDetails.containsKey("isCompany") && isCompany){
+		    	  
 		    	  userObj = new JsonObject().put("userName", userDetails.getString("userName")).put("password", userDetails.getString("password"))
 		    			  .put("email", userDetails.getString("email")).put("first", userDetails.getString("first"))
 		    			  .put("last", userDetails.getString("last")).put("companyId", cId).put("siteId", sId)
-		    			  .put("deptId", dId);
+		    			  .put("deptId", dId).put("loggedIn", true);
 		    	  } else {
 		    		  
 		    		  userObj = new JsonObject().put("userName", userDetails.getString("userName")).put("password", userDetails.getString("password"))
 			    			  .put("email", userDetails.getString("email")).put("first", userDetails.getString("first"))
 			    			  .put("last", userDetails.getString("last")).put("companyId", userDetails.getString("companyId")).put("siteId", userDetails.getString("siteId"))
-			    			  .put("deptId", userDetails.getString("deptId"));
+			    			  .put("deptId", userDetails.getString("deptId")).put("loggedIn", true);
 		    	  }
 		    	  client.insert("users", userObj, insert -> {
 		              // error handling
